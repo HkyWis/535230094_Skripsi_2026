@@ -113,7 +113,7 @@ export async function deleteUser(token: string, userId: string): Promise<void> {
   });
 
   if (!res.ok) {
-    const error = await res.json();
+    const error = await res.json().catch(() => ({}));
     throw new Error(error.detail || 'Gagal menghapus akun');
   }
 }

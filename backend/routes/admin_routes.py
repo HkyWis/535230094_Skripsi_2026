@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, status, Depends
+from postgrest.exceptions import APIError
 
 from models import UserRequest, UpdateUserRequest
 from database import supabase
@@ -228,6 +229,19 @@ async def delete_user(
             detail="Akun Administrator tidak dapat dihapus",
         )
 
-    supabase.table("users").delete().eq("user_id", user_id).execute()
+    try:
+        supabase.table("users").delete().eq("user_id", user_id).execute()
+    except APIError as e:
+        code = getattr(e, "code", None)
+        message = getattr(e, "message", "") or str(e)
+        if code == "23503" or "violates foreign key constraint" in message:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Akun {user['username']} tidak dapat dihapus karena sedang digunakan pada data perbaikan laptop",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Gagal menghapus user",
+        )
 
     return {"message": f"Akun {user['username']} berhasil dihapus"}

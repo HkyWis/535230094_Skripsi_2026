@@ -323,6 +323,15 @@ async def update_data_service(
         )
 
     data = request.model_dump(mode="json")
+    # ---------- Stage‑based validation ----------
+    if data.get("status_service", "").lower() == "diagnostik":
+        forbidden_fields = ["solusi", "harga", "tanggal_selesai", "estimasi_hari"]
+        for field in forbidden_fields:
+            if data.get(field) not in (None, ""):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Field '{field}' cannot be set while service is in Diagnostik stage",
+                )
 
     # Ambil nama produk laptop untuk input model CatBoost
     jenis_laptop_res = (
@@ -366,10 +375,22 @@ async def update_data_service(
 
         features[key] = 1 if data.get(flag) else 0
 
-    # Prediksi ulang estimasi hari berdasarkan data terbaru
-    estimasi = predict_estimasi_hari(features)
+    # Prediksi atau hitung estimasi hari berdasarkan data terbaru
+    if data.get("tanggal_selesai"):
+        try:
+            from datetime import datetime
+            tanggal_masuk_dt = datetime.fromisoformat(data["tanggal_masuk"]).date()
+            tanggal_selesai_dt = datetime.fromisoformat(data["tanggal_selesai"]).date()
+            estimasi = (tanggal_selesai_dt - tanggal_masuk_dt).days
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid date format for tanggal_masuk or tanggal_selesai",
+            )
+    else:
+        estimasi = predict_estimasi_hari(features)
 
-    # Gunakan hasil prediksi backend, bukan estimasi dari frontend
+    # Simpan estimasi ke data
     data["estimasi_hari"] = estimasi
 
     customer_data = {
@@ -386,11 +407,11 @@ async def update_data_service(
         "laptop_sn": data["laptop_sn"],
         "status_garansi": data["status_garansi"],
         "status_service": data["status_service"],
-        "solusi": data["solusi"],
+        "solusi": data.get("solusi"),
         "kategori_kerusakan": data["kategori_kerusakan"],
-        "harga": data["harga"],
+        "harga": data.get("harga"),
         "estimasi_hari": estimasi,
-        "tanggal_selesai": data["tanggal_selesai"],
+        "tanggal_selesai": data.get("tanggal_selesai"),
     }
 
     keluhan_data = {

@@ -100,8 +100,7 @@ Buka terminal baru (PowerShell / Command Prompt) dan ikuti langkah berikut:
    uvicorn main:app --reload --host 127.0.0.1 --port 8000
 
 7. Backend sekarang aktif di:
-   - API URL: http://localhost:8000
-   - Dokumentasi Swagger UI: http://localhost:8000/docs
+   API URL: http://localhost:8000
 
 --------------------------------------------------------------------------------
 4. CARA MENJALANKAN FRONTEND (NEXT.JS)
@@ -136,21 +135,3 @@ Setelah database diinisialisasi melalui `tabel.sql`, akun default administrator:
 - Role     : Super Admin
 
 Anda dapat login melalui halaman: http://localhost:3000/login
-
---------------------------------------------------------------------------------
-6. TROUBLESHOOTING & CATATAN PENTING
---------------------------------------------------------------------------------
-1. CORS Error:
-   Backend telah dikonfigurasi untuk menerima request dari origin
-   http://localhost:3000. Pastikan frontend berjalan di port 3000.
-
-2. Model Machine Learning:
-   File model CatBoost terletak di: `machinelearning/catboost_model_baseline.cbm`
-   Backend secara otomatis memuat model ini melalui `backend/ml_model.py` untuk
-   memprediksi estimasi hari servis saat tiket servis dibuat/diubah. Pastikan
-   file model tidak dipindahkan.
-
-3. Fitur Estimasi Hari Ini:
-   Filter "Estimasi Hari Ini" pada Dashboard dan Data Service menghitung hari
-   kerja efektif (Senin-Jumat) dari tanggal masuk servis ditambah estimasi hari.
-================================================================================

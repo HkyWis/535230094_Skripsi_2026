@@ -26,7 +26,7 @@ export default function Advantages() {
             <span>Alasan Pelanggan Memilih Kami</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-800 tracking-tight">
-            Keunggulan Service Laptop di FixTech
+            Keunggulan Service Laptop di Z-Tech
           </h2>
           <p className="text-base text-slate-500">
             Kami mengutamakan kejujuran, transparansi biaya, ketepatan estimasi waktu, serta rasa aman untuk semua unit laptop yang Anda percayakan.

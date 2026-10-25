@@ -127,7 +127,8 @@ export default function ServiceFormModal({
 
   const validateForm = (): Record<string, string> => {
     const e: Record<string, string> = {};
-    const harga = parseInt(biaya.replace(/\D/g, ''), 10) || 0;
+    const hargaRaw = parseInt(biaya.replace(/\D/g, ''), 10);
+    const harga = !isNaN(hargaRaw) && hargaRaw > 0 ? hargaRaw : null;
     const isPerbaikan = statusService === 'Perbaikan';
     const isSelesai = statusService === 'Selesai';
     const perluTahapPerbaikan = isPerbaikan || isSelesai;
@@ -162,7 +163,7 @@ export default function ServiceFormModal({
       if (!userId) e.userId = `Teknisi wajib dipilih pada tahap ${statusService}`;
       if (!kategoriKerusakan.trim())
         e.kategoriKerusakan = `Kerusakan dialami wajib diisi pada tahap ${statusService}`;
-      if (harga <= 0) e.biaya = `Biaya wajib diisi (lebih dari 0) pada tahap ${statusService}`;
+      if (!harga) e.biaya = `Biaya wajib diisi (lebih dari 0) pada tahap ${statusService}`;
     }
 
     // ===== Tahap 3: Selesai =====
@@ -209,7 +210,7 @@ export default function ServiceFormModal({
       setDeskripsiKeluhan(k?.keluhan ?? '');
       setSolusi(editData.solusi ?? '');
       setUserId(editData.user_id ?? '');
-      setBiaya(String(editData.harga ?? 0));
+      setBiaya(editData.harga != null && editData.harga > 0 ? String(editData.harga) : '');
       setStatusService(editData.status_service ?? 'Diagnostik');
 
       const biner: Record<string, number> = {};
@@ -301,7 +302,23 @@ export default function ServiceFormModal({
   const MAX_CUSTOMER_SHOWN = 50;
   const q = customerQuery.trim().toLowerCase();
   const qDigits = q.replace(/\D/g, '');
-  const filteredCustomers = customerList.filter((c) => {
+  const uniqueCustomers = (() => {
+    const seen = new Map<string, CustomerData>();
+    for (const c of customerList) {
+      const key = (c.customer_name ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+      if (!key) {
+        seen.set(`__noname_${c.customer_id}`, c);
+        continue;
+      }
+      const existing = seen.get(key);
+      if (!existing || (c.customer_id === customerId && existing.customer_id !== customerId)) {
+        seen.set(key, c);
+      }
+    }
+    return Array.from(seen.values());
+  })();
+
+  const filteredCustomers = uniqueCustomers.filter((c) => {
     if (!q) return true;
     const nameMatch = (c.customer_name ?? '').toLowerCase().includes(q);
     const phoneMatch =
@@ -390,7 +407,8 @@ export default function ServiceFormModal({
     ) as unknown as KeluhanFlags;
     const jumlahKeluhan = Object.values(flags).filter(Boolean).length;
 
-    const harga = parseInt(biaya.replace(/\D/g, ''), 10) || 0;
+    const hargaRaw = parseInt(biaya.replace(/\D/g, ''), 10);
+    const harga = !isNaN(hargaRaw) && hargaRaw > 0 ? hargaRaw : null;
 
     const isNewCustomer = customerMode === 'new';
     const isEditCustomer = customerMode === 'edit';
@@ -880,14 +898,15 @@ export default function ServiceFormModal({
 
                 {/* Tanggal Selesai */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 block">
-                    Tanggal Selesai
+                  <label className={`text-xs font-semibold block ${statusService !== 'Selesai' ? 'text-slate-400' : 'text-slate-700'}`}>
+                    Tanggal Selesai{statusService !== 'Selesai' && <span className="ml-1 text-[10px] font-normal">(hanya pada Step 3)</span>}
                   </label>
                   <input
                     type="date"
                     value={tanggalSelesai}
+                    disabled={statusService !== 'Selesai'}
                     onChange={(e) => setTanggalSelesai(e.target.value)}
-                    className={inputClass}
+                    className={statusService !== 'Selesai' ? readOnlyInputClass : inputClass}
                   />
                   <FieldError msg={errors.tanggalSelesai} />
                 </div>
@@ -971,15 +990,16 @@ export default function ServiceFormModal({
                   </div>
 
                   <div className="space-y-1.5 pt-1">
-                    <label className="text-xs font-semibold text-slate-700 block">
-                      Kerusakan Dialami
+                    <label className={`text-xs font-semibold block ${statusService === 'Diagnostik' ? 'text-slate-400' : 'text-slate-700'}`}>
+                      Kerusakan Dialami{statusService === 'Diagnostik' && <span className="ml-1 text-[10px] font-normal">(tersedia di Step 2)</span>}
                     </label>
                     <textarea
                       rows={3}
                       value={kategoriKerusakan}
+                      disabled={statusService === 'Diagnostik'}
                       onChange={(e) => setKategoriKerusakan(e.target.value)}
                       placeholder="Contoh: LCD Bergaris & Flicker, Mati Total Short IC, Korosi Tumpahan Cairan, Overheating..."
-                      className="w-full bg-slate-50 border border-sky-200 rounded-xl p-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:bg-white transition leading-relaxed"
+                      className={`w-full border rounded-xl p-3 text-xs placeholder-slate-400 focus:outline-none transition leading-relaxed ${statusService === 'Diagnostik' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-slate-50 text-slate-800 border-sky-200 focus:border-sky-500 focus:bg-white'}`}
                     />
                     <FieldError msg={errors.kategoriKerusakan} />
                   </div>
@@ -988,15 +1008,16 @@ export default function ServiceFormModal({
 
               {/* Line 2: Solusi */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 block">
-                  Solusi Perbaikan
+                <label className={`text-xs font-semibold block ${statusService !== 'Selesai' ? 'text-slate-400' : 'text-slate-700'}`}>
+                  Solusi Perbaikan{statusService !== 'Selesai' && <span className="ml-1 text-[10px] font-normal">(hanya pada Step 3)</span>}
                 </label>
                 <input
                   type="text"
                   value={solusi}
+                  disabled={statusService !== 'Selesai'}
                   onChange={(e) => setSolusi(e.target.value)}
                   placeholder="Catatan diagnosa teknisi & langkah perbaikan (misal: Deep cleaning & repaste PTM7950, reballing IC Power)..."
-                  className={inputClass}
+                  className={statusService !== 'Selesai' ? readOnlyInputClass : inputClass}
                 />
                 <FieldError msg={errors.solusi} />
               </div>
@@ -1013,14 +1034,14 @@ export default function ServiceFormModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 block">
-                    Teknisi Penanggung Jawab
+                  <label className={`text-xs font-semibold block ${statusService === 'Diagnostik' ? 'text-slate-400' : 'text-slate-700'}`}>
+                    Teknisi Penanggung Jawab{statusService === 'Diagnostik' && <span className="ml-1 text-[10px] font-normal">(tersedia di Step 2)</span>}
                   </label>
                   <select
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
-                    disabled={loadingMaster}
-                    className={`${inputClass} font-medium`}
+                    disabled={loadingMaster || statusService === 'Diagnostik'}
+                    className={`${statusService === 'Diagnostik' ? readOnlyInputClass : inputClass} font-medium`}
                   >
                     <option value="">
                       {loadingMaster ? 'Memuat data user...' : '-- Pilih teknisi --'}
@@ -1036,15 +1057,16 @@ export default function ServiceFormModal({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 block">
-                    Estimasi Biaya Pengerjaan
+                  <label className={`text-xs font-semibold block ${statusService === 'Diagnostik' ? 'text-slate-400' : 'text-slate-700'}`}>
+                    Estimasi Biaya Pengerjaan{statusService === 'Diagnostik' && <span className="ml-1 text-[10px] font-normal">(tersedia di Step 2)</span>}
                   </label>
                   <input
                     type="text"
                     value={biaya}
+                    disabled={statusService === 'Diagnostik'}
                     onChange={(e) => setBiaya(e.target.value)}
                     placeholder="Rp 450.000"
-                    className={inputClass}
+                    className={statusService === 'Diagnostik' ? readOnlyInputClass : inputClass}
                   />
                   <FieldError msg={errors.biaya} />
                 </div>

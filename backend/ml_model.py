@@ -5,7 +5,7 @@ from catboost import CatBoostRegressor
 MODEL_PATH = os.path.join(
     os.path.dirname(os.path.dirname(__file__)), 
     "machinelearning", 
-    "catboost_model_baseline.cbm"
+    "catboost_model_iqr.cbm"
 )
 
 # Load model

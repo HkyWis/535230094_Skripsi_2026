@@ -497,36 +497,42 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari tiket / nama / model..."
-                className="bg-slate-50 border border-sky-200 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:bg-white w-56"
-              />
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold text-slate-500 block">Pencarian</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari tiket / nama / model..."
+                  className="bg-slate-50 border border-sky-200 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:bg-white w-56"
+                />
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+              </div>
             </div>
 
-            <select
-              value={filterStep}
-              onChange={(e) => setFilterStep(e.target.value)}
-              className="bg-slate-50 border border-sky-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:border-sky-500 font-medium"
-            >
-              <option value="all">Semua Status (3 Step)</option>
-              <option value="1">Step 1 - Diagnostik</option>
-              <option value="2">Step 2 - Perbaikan</option>
-              <option value="3">Step 3 - Selesai</option>
-            </select>
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold text-slate-500 block">Filter Status</label>
+              <select
+                value={filterStep}
+                onChange={(e) => setFilterStep(e.target.value)}
+                className="bg-slate-50 border border-sky-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:border-sky-500 font-medium"
+              >
+                <option value="all">Semua Status (3 Step)</option>
+                <option value="1">Step 1 - Diagnostik</option>
+                <option value="2">Step 2 - Perbaikan</option>
+                <option value="3">Step 3 - Selesai</option>
+              </select>
+            </div>
 
             <button
               type="button"
               onClick={() => setFilterEstimasiHariIni((prev) => !prev)}
               aria-pressed={filterEstimasiHariIni}
               className={`group relative px-3 py-2 rounded-xl text-xs font-semibold border transition-all duration-200 cursor-pointer flex items-center gap-2 select-none active:scale-[0.98] ${filterEstimasiHariIni
-                  ? 'bg-sky-600 text-white border-sky-600 shadow-sm shadow-sky-500/25 ring-2 ring-sky-400/30'
-                  : 'bg-white text-slate-700 border-slate-300 hover:border-sky-400 hover:bg-sky-50/60 hover:text-sky-700 shadow-2xs'
+                ? 'bg-sky-600 text-white border-sky-600 shadow-sm shadow-sky-500/25 ring-2 ring-sky-400/30'
+                : 'bg-white text-slate-700 border-slate-300 hover:border-sky-400 hover:bg-sky-50/60 hover:text-sky-700 shadow-2xs'
                 }`}
               title="Klik untuk filter tiket dengan estimasi selesai hari ini"
             >
@@ -541,8 +547,8 @@ export default function DashboardPage() {
               >
                 <span
                   className={`w-3 h-3 rounded-full transition-transform duration-200 transform shadow-xs ${filterEstimasiHariIni
-                      ? 'translate-x-3 bg-white'
-                      : 'translate-x-0 bg-white group-hover:bg-sky-500'
+                    ? 'translate-x-3 bg-white'
+                    : 'translate-x-0 bg-white group-hover:bg-sky-500'
                     }`}
                 />
               </span>

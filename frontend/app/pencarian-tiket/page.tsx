@@ -18,6 +18,8 @@ function TicketSearchContent() {
   const codeFromUrl = searchParams.get('code') || '';
 
   const [searchCode, setSearchCode] = useState(codeFromUrl.toUpperCase());
+  const [searchedCode, setSearchedCode] = useState('');
+  const [inputError, setInputError] = useState<string | null>(null);
   const [ticketData, setTicketData] = useState<DataServiceItem | null>(null);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -25,10 +27,20 @@ function TicketSearchContent() {
 
   const lookupTicket = useCallback(async (code: string) => {
     const upper = code.trim().toUpperCase();
-    if (!upper) return;
 
+    if (!upper) {
+      setTicketData(null);
+      setSearched(false);
+      setError(null);
+      setInputError('Nomor tiket tidak boleh kosong. Silakan masukkan nomor tiket Anda.');
+      return;
+    }
+
+    setInputError(null);
+    setSearchedCode(upper);   // simpan kode yang dicari
     setLoading(true);
     setError(null);
+    setSearched(false);
     try {
       const list = await getDataService();
       const found = list.find(
@@ -44,6 +56,11 @@ function TicketSearchContent() {
     }
   }, []);
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    lookupTicket(searchCode);
+  };
+
   // Auto-cari kalau ada ?code= di URL
   useEffect(() => {
     const code = searchParams.get('code');
@@ -53,11 +70,6 @@ function TicketSearchContent() {
       lookupTicket(upper);
     }
   }, [searchParams, lookupTicket]);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    lookupTicket(searchCode);
-  };
 
   const getWhatsAppLink = (ticketCode?: string, laptop?: string) => {
     const text = encodeURIComponent(
@@ -95,24 +107,38 @@ function TicketSearchContent() {
 
           {/* Search Bar */}
           <div className="bg-white border border-sky-100 rounded-3xl p-5 sm:p-6 shadow-sm shadow-sky-100/50">
-            <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
+            <form onSubmit={handleSearchSubmit} noValidate>
+              <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="text"
                   value={searchCode}
-                  onChange={(e) => setSearchCode(e.target.value)}
+                  onChange={(e) => {
+                    setSearchCode(e.target.value);
+                    if (inputError) setInputError(null);
+                  }}
                   placeholder="Masukkan Nomor Tiket Anda..."
-                  className="w-full bg-sky-50 text-slate-800 placeholder-slate-400 text-sm font-mono font-bold px-5 py-4 rounded-2xl border border-sky-200 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20 uppercase transition"
+                  aria-invalid={!!inputError}
+                  className={`flex-1 w-full bg-sky-50 text-slate-800 placeholder-slate-400 text-sm font-mono font-bold px-5 py-4 rounded-2xl border focus:outline-none focus:ring-2 uppercase transition ${inputError
+                      ? 'border-rose-400 focus:border-rose-400 focus:ring-rose-400/20'
+                      : 'border-sky-200 focus:border-sky-400 focus:ring-sky-400/20'
+                    }`}
                 />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-8 py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 disabled:opacity-60 text-white font-bold text-sm shadow-md shadow-sky-400/25 flex items-center justify-center gap-2 transition cursor-pointer whitespace-nowrap"
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  <span>Cari Status Tiket</span>
+                </button>
               </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-8 py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 disabled:opacity-60 text-white font-bold text-sm shadow-md shadow-sky-400/25 flex items-center justify-center gap-2 transition cursor-pointer whitespace-nowrap"
-              >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                <span>Cari Status Tiket</span>
-              </button>
+
+              {inputError && (
+                <p className="mt-3 ml-1 flex items-center gap-1.5 text-xs font-semibold text-rose-600">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{inputError}</span>
+                </p>
+              )}
             </form>
           </div>
 
@@ -132,7 +158,7 @@ function TicketSearchContent() {
               <h3 className="text-lg font-bold text-slate-800">Terjadi Kesalahan</h3>
               <p className="text-xs text-slate-500">{error}</p>
               <button
-                onClick={() => lookupTicket(searchCode)}
+                onClick={() => lookupTicket(searchedCode)}
                 className="text-xs font-semibold text-sky-600 underline"
               >
                 Coba lagi
@@ -342,7 +368,7 @@ function TicketSearchContent() {
           {!loading && !error && !ticketData && searched && (
             <div className="p-12 text-center bg-white border border-sky-100 rounded-3xl space-y-4 shadow-sm">
               <AlertCircle className="w-12 h-12 text-orange-400 mx-auto" />
-              <h3 className="text-xl font-bold text-slate-800">Tiket &quot;{searchCode}&quot; Tidak Ditemukan</h3>
+              <h3 className="text-xl font-bold text-slate-800">Tiket &quot;{searchedCode}&quot; Tidak Ditemukan</h3>
               <p className="text-xs text-slate-400 max-w-md mx-auto">
                 Silakan periksa kembali kode tiket Anda atau hubungi kami jika masih mengalami kendala.
               </p>

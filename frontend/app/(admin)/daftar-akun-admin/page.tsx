@@ -147,8 +147,8 @@ export default function DaftarAkunAdminPage() {
                         <div className="font-bold text-slate-800">{adm.username}</div>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${adm.role_name === 'Super Admin'
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${adm.role_name === 'Super Admin'
                         ? 'bg-purple-50 text-purple-700 border border-purple-200'
                         : 'bg-sky-50 text-sky-700 border border-sky-200'
                         }`}>
